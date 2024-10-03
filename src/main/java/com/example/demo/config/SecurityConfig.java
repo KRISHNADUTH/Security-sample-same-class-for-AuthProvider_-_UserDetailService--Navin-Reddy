@@ -34,7 +34,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(requests -> requests
-                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/h2-console/**","/login").permitAll()
                 .requestMatchers("/myAccount").hasRole("ADMIN")
                 .requestMatchers("/myLoans").hasRole("USER")
                 .requestMatchers("/myCards").hasRole("USER")
@@ -75,7 +75,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationProvider(AuthenticationConfiguration authenticationConfiguration) throws Exception{
+    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
         return authenticationConfiguration.getAuthenticationManager();
     }
 

@@ -20,13 +20,13 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtTokenService {
 
-    private String secret;
+    private String secretKey;
 
-    private String getSecret(){
+    private String getSecretKey(){
         try {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
             SecretKey secretKey = keyGenerator.generateKey();
-            System.out.println("Secret Key : " + secretKey.toString());
+            System.out.println("Secret KeyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY : " + secretKey.toString());
             return Base64.getEncoder().encodeToString(secretKey.getEncoded());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error generating secret key", e);
@@ -34,11 +34,12 @@ public class JwtTokenService {
     }
 
     public JwtTokenService(){
-        secret = getSecret();
+        secretKey = getSecretKey();
     }
 
     private SecretKey getKey(){
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] bas64Decoded = Base64.getDecoder().decode(secretKey);
+        return Keys.hmacShaKeyFor(bas64Decoded);
     }
     public String generateJwtToken(String username, Collection<? extends GrantedAuthority> authorities) {
         String jwt = Jwts
@@ -48,7 +49,7 @@ public class JwtTokenService {
                     .claim("username", username)
                     .claim("authorities", authorities.stream().map(auth -> auth.getAuthority()).collect(Collectors.joining(",")))
                     .issuedAt(new Date())
-                    .expiration(new Date(new Date().getTime()+10*60*1000))
+                    .expiration(new Date(new Date().getTime()+30*60*1000))
                     .signWith(getKey())
                     .compact();
         return jwt;
