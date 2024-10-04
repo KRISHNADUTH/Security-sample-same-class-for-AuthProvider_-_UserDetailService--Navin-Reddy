@@ -71,13 +71,13 @@ public class UserController {
         return ResponseEntity.ok().body("Registration details saved successfully");
     }
     
-    @PostMapping("/login")
+    @PostMapping("/login") // Dont use http.formLogin(Customizer.withDefaults()); inside security config if you want to use "/login" as an end point in controller, becasue "/login" is an inbuild GET endpoint inside spring incase of form login.
     public ResponseEntity<LoginResponseDto> generateJwtToken(@RequestBody LoginRequestDto loginRequestDto){
         System.out.println("**********************************************************************************************************");
         System.out.println("Login request DDDDDDDDDDDDDDDDDDTTTTTTTTTTTTTTTTTOOOOOOOOOOOOOOOOOOOOO - "+loginRequestDto.toString());
         Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequestDto.username(), loginRequestDto.password());
         Authentication reponseAuthentication = authenticationManager.authenticate(authentication);
-        if(authentication!=null && authentication.isAuthenticated()){
+        if(reponseAuthentication!=null && reponseAuthentication.isAuthenticated()){
             String jwt = jwtTokenService.generateJwtToken(reponseAuthentication.getName(),reponseAuthentication.getAuthorities());
             return ResponseEntity.ok().body(new LoginResponseDto(HttpStatus.OK.getReasonPhrase(), jwt));
         } else {

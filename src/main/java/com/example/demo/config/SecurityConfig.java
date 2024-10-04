@@ -34,7 +34,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(requests -> requests
-                .requestMatchers("/h2-console/**","/login").permitAll()
+                .requestMatchers("/h2-console/**","/login","/contact").permitAll()
                 .requestMatchers("/myAccount").hasRole("ADMIN")
                 .requestMatchers("/myLoans").hasRole("USER")
                 .requestMatchers("/myCards").hasRole("USER")
@@ -50,7 +50,7 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .securityContext(context -> context.requireExplicitSave(false));
 
-        http.formLogin(Customizer.withDefaults());
+        // http.formLogin(Customizer.withDefaults());
 
         http.httpBasic(Customizer.withDefaults());
 

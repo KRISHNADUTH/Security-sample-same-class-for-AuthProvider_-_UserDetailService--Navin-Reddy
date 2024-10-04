@@ -12,6 +12,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
@@ -27,6 +28,7 @@ public class JwtTokenService {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
             SecretKey secretKey = keyGenerator.generateKey();
             System.out.println("Secret KeyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY : " + secretKey.toString());
+            System.out.println("Secret KeyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY : " + Base64.getEncoder().encodeToString(secretKey.getEncoded()));
             return Base64.getEncoder().encodeToString(secretKey.getEncoded());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error generating secret key", e);
@@ -52,7 +54,18 @@ public class JwtTokenService {
                     .expiration(new Date(new Date().getTime()+30*60*1000))
                     .signWith(getKey())
                     .compact();
+        System.out.println("JWT TOKENNNNNNNNNN GENERATEEEEDDDDDDDDDDD IIIIIIIIISSSSSSSS ====== "+jwt);
         return jwt;
+    }
+
+    public String extractUsername(String jwtToken) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'extractUsername'");
+    }
+
+    public boolean validateToken(String jwtToken, UserDetails userDetails) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'validateToken'");
     }
     
 }
