@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +21,7 @@ import com.example.demo.dto.LoginRequestDto;
 import com.example.demo.dto.LoginResponseDto;
 import com.example.demo.model.Customer;
 import com.example.demo.repo.CustomerRepository;
-import com.example.demo.service.JwtTokenService;
+import com.example.demo.service.JwtService;
 
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,16 +30,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserController {
 
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    private JwtTokenService jwtTokenService;
+    private final JwtService jwtTokenService;
 
     @GetMapping("/myAccount")
     public ResponseEntity<Object> getAccount(){

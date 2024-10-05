@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,8 +18,11 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import com.example.demo.filter.JwtFilter;
 
 import lombok.AllArgsConstructor;
 
@@ -30,11 +34,14 @@ public class SecurityConfig {
 
     AuthenticationEntryPoint authenticationEntryPoint;
 
+    @Autowired
+    JwtFilter jwtFilter;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(requests -> requests
-                .requestMatchers("/h2-console/**","/login","/contact").permitAll()
+                .requestMatchers("/h2-console/**","/login","/contact","/register").permitAll()
                 .requestMatchers("/myAccount").hasRole("ADMIN")
                 .requestMatchers("/myLoans").hasRole("USER")
                 .requestMatchers("/myCards").hasRole("USER")
@@ -45,10 +52,10 @@ public class SecurityConfig {
 
         // CsrfTokenRequestAttributeHandler attributeHandler = new
         // CsrfTokenRequestAttributeHandler();
-        http.csrf(csrf -> csrf.disable());
+        http.csrf(csrf -> csrf.disable()).addFilterBefore(jwtFilter, BasicAuthenticationFilter.class);
 
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
-                .securityContext(context -> context.requireExplicitSave(false));
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                // .securityContext(context -> context.requireExplicitSave(false));
 
         // http.formLogin(Customizer.withDefaults());
 
