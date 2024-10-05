@@ -22,37 +22,41 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
 
 @Component
+@NoArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
-    JwtService jwtService;
-
+    private ApplicationContext context;
+    
     @Autowired
-    ApplicationContext context;
+    private JwtService jwtTokenService;
+
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String userName = null;
-
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
-            token = authHeader.substring(7);
-            userName = jwtService.extractUsername(token);
-        }
-
-        if(userName != null && SecurityContextHolder.getContext().getAuthentication()==null){
-
-            UserDetails userDetails = context.getBean(MyUserDetailService.class).loadUserByUsername(userName);
-
-            if(jwtService.validateToken(token, userDetails)){
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        System.out.println("JwtTokenValidationFilter IS CAAAAAAALEEDDDDDDDDDDDDDDDD");
+        String authorizationHeader = request.getHeader("Authorization");
+        System.out.println("Authorization from request isssssssssssssssss = "+authorizationHeader);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            System.out.println("Inside IF Authorization from request isssssssssssssssss = "+authorizationHeader);
+            String jwtToken = authorizationHeader.substring(7);
+            String username = jwtTokenService.extractUsername(jwtToken);
+            System.out.println("Extracted user name issssssss = "+username);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = context.getBean(MyUserDetailService.class).loadUserByUsername(username);
+                if (jwtTokenService.validateToken(jwtToken, userDetails)) {
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                                                                                userDetails.getUsername(), null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                } else {
+                    throw new BadCredentialsException("JWT token validation failed........");
+                }
             }
+
         }
         filterChain.doFilter(request, response);
     }
+
 }

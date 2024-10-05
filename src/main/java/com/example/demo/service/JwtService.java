@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import io.jsonwebtoken.InvalidClaimException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -23,72 +24,89 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class JwtService {
 
-    private static final String SECRET = "TmV3U2VjcmV0S2V5Rm9ySldUU2lnbmluZ1B1cnBvc2VzMTIzNDU2Nzg=\r\n";
-
     private String secretKey;
 
-    public JwtService(){
-        secretKey = generateSecretKey();
-    }
-
-    public String generateSecretKey() {
+    private String getSecretKey() {
         try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey secretKey = keyGen.generateKey();
-            System.out.println("Secret Key : " + secretKey.toString());
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+            SecretKey secretKey = keyGenerator.generateKey();
+            System.out.println("Secret KeyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY : " + secretKey.toString());
+            System.out.println("Secret KeyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY : "
+                    + Base64.getEncoder().encodeToString(secretKey.getEncoded()));
             return Base64.getEncoder().encodeToString(secretKey.getEncoded());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error generating secret key", e);
         }
     }
 
-    public String generateJwtToken(String username, Collection<? extends GrantedAuthority> collection) {
-
-        Map<String, Object> claims = new HashMap<>();
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*30))
-                .signWith(getKey(), SignatureAlgorithm.HS256).compact();
-
+    public JwtService() {
+        secretKey = getSecretKey();
     }
 
     private SecretKey getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        byte[] bas64Decoded =  Base64.getDecoder().decode(secretKey);
+        return Keys.hmacShaKeyFor(bas64Decoded);
     }
 
-    public String extractUsername(String token) {
-        // extract the username from jwt token
-        return extractClaim(token, Claims::getSubject);
+    public String generateJwtToken(String username, Collection<? extends GrantedAuthority> authorities) {
+
+        String jwt = Jwts
+                .builder()
+                .issuer(username)
+                .subject(username)
+                .claim("username", username)
+                .claim("authorities",
+                        authorities.stream().map(auth -> auth.getAuthority()).collect(Collectors.joining(",")))
+                .issuedAt(new Date())
+                .expiration(new Date(new Date().getTime() + 90 * 60 * 1000))
+                .signWith(getKey())
+                .compact();
+
+        return jwt;
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
-        final Claims claims = extractAllClaims(token);
+    public String extractUsername(String jwtToken) {
+
+        String username = extractClaim(jwtToken, Claims::getSubject);
+
+        return username;
+    }
+
+    public boolean validateToken(String jwtToken, UserDetails userDetails) {
+
+        if (userDetails.getUsername().equals(extractUsername(jwtToken)) && isTokenValid(jwtToken)) {
+
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isTokenValid(String jwtToken) {
+        return extractExpiration(jwtToken).after(new Date());
+    }
+
+    private Date extractExpiration(String jwtToken) {
+
+        return extractClaim(jwtToken, Claims::getExpiration);
+    }
+
+    private <T> T extractClaim(String jwtToken, Function<Claims, T> claimResolver) {
+
+        Claims claims = extractAllClaims(jwtToken);
+
         return claimResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                    .verifyWith(getKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+    public Claims extractAllClaims(String jwtToken) throws InvalidClaimException {
+
+        Claims claims =  Jwts
+                        .parser()
+                        .verifyWith(getKey())
+                        .build()
+                        .parseSignedClaims(jwtToken)
+                        .getPayload();
+
+        return claims;
     }
 
-
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String userName = extractUsername(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
 }
