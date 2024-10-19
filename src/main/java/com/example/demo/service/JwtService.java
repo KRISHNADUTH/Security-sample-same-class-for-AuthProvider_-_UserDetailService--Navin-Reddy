@@ -24,9 +24,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class JwtService {
 
-    private String secretKey;
+    private String secret;
 
-    private String getSecretKey() {
+    private String generateSecret() {
         try {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
             SecretKey secretKey = keyGenerator.generateKey();
@@ -40,11 +40,11 @@ public class JwtService {
     }
 
     public JwtService() {
-        secretKey = getSecretKey();
+        secret = generateSecret();
     }
 
-    private SecretKey getKey() {
-        byte[] bas64Decoded =  Base64.getDecoder().decode(secretKey);
+    private SecretKey getSecretKey() {
+        byte[] bas64Decoded =  Base64.getDecoder().decode(secret);
         return Keys.hmacShaKeyFor(bas64Decoded);
     }
 
@@ -59,7 +59,7 @@ public class JwtService {
                         authorities.stream().map(auth -> auth.getAuthority()).collect(Collectors.joining(",")))
                 .issuedAt(new Date())
                 .expiration(new Date(new Date().getTime() + 90 * 60 * 1000))
-                .signWith(getKey())
+                .signWith(getSecretKey())
                 .compact();
 
         return jwt;
@@ -101,7 +101,7 @@ public class JwtService {
 
         Claims claims =  Jwts
                         .parser()
-                        .verifyWith(getKey())
+                        .verifyWith(getSecretKey())
                         .build()
                         .parseSignedClaims(jwtToken)
                         .getPayload();
